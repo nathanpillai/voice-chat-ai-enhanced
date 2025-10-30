@@ -50,3 +50,8 @@ static/js/webrtc_realtime_v2.js
 ## Future Plans:
 - Remove dependency on original source
 - Standalone installation
+
+<img width="717" height="797" alt="image" src="https://github.com/user-attachments/assets/d357b2c0-64cf-4227-a88a-67a74d54fda8" />
+
+<img width="1904" height="713" alt="image" src="https://github.com/user-attachments/assets/06b0d1ef-80f5-49ec-a6e3-3b83f9b8d14d" />
+
