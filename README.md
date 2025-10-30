@@ -18,22 +18,33 @@ created from the voice-chat-ai - this code works on local version of ollama in c
 This version includes changes to the following files:
 
 app/main.py
+
 app/app.py
+
 app/shared.py
+
 app/transcription.py
+
 app/enhanced_logic.py
+
 cli.py
 
 app/requirements.txt
+
 app/requirements_cpu.txt
 
 templates/enhanced_browser_v3.html
+
 templates/webrtc_realtime_v2.html
+
 templates/index.html
+
 templates/webrtc_realtime.html
 
 static/js/scripts.js
+
 static/js/enhanced.js
+
 static/js/webrtc_realtime_v2.js
 
 ## Future Plans:
