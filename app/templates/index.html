@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Chat AI - Home</title>
+    <link rel="icon" href="/app/static/favicon.ico" type="image/x-icon">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;  
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 25px;
+            text-decoration: none;
+            color: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.3);
+            margin-left: 10px;
+        }
+
+        .icon {
+            font-size: 1.8rem;
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .card h2 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Voice Chat AI</h1>
+        <p class="subtitle">Choose your AI voice chat experience</p>
+
+        <div class="links">
+            <a href="/webrtc_realtime" class="card">
+                <h2>
+                    <span class="icon">🌐</span>
+                    OpenAI Realtime
+                    <span class="badge">CLOUD</span>
+                </h2>
+                <p>Ultra-low latency voice chat using OpenAI's Realtime API. WebRTC streaming for instant responses with minimal delay.</p>
+            </a>
+
+            <a href="/webrtc_realtime_v2" class="card">
+                <h2>
+                    <span class="icon">🏠</span>
+                    Local Ollama Realtime
+                    <span class="badge">LOCAL</span>
+                </h2>
+                <p>100% local AI using Faster Whisper, Ollama (Llama), and Coqui TTS. Private, offline, and fully under your control.</p>
+            </a>
+
+            <a href="/enhanced_browser_v3" class="card">
+                <h2>
+                    <span class="icon">⚙️</span>
+                    Enhanced Browser
+                    <span class="badge">ADVANCED</span>
+                </h2>
+                <p>Flexible voice chat with multiple AI providers and TTS options. Configure models, voices, and settings on the fly.</p>
+            </a>
+        </div>
+
+        <footer>
+            <p>Powered by AI • <a href="https://github.com/bigsk1/voice-chat-ai" target="_blank">View on GitHub</a></p>
+        </footer>
+    </div>
+</body>
+</html>

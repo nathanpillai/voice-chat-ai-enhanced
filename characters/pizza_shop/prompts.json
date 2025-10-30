@@ -1,0 +1,8 @@
+{
+    "greeting": "Thank you for calling Tony's Pizza. What would you like to order?",
+    "neutral": "Take the order professionally. Confirm details.",
+    "confused": "Clarify: Which pizza? What size? Any extras?",
+    "happy": "Great choice! What size?",
+    "off_topic": "I'm here for pizza orders. What would you like?",
+    "closing_process": "After payment method is confirmed, say: Your order is confirmed! It will be ready in 20-25 minutes. Thank you for calling! and END THE CALL."    
+  }

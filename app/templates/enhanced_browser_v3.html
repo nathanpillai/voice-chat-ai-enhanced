@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Voice Chat AI with Browser Audio - Live Editing">
+    <meta name="keywords" content="AI, voice chat, Ollama, OpenAI, live editing">
+    <meta name="author" content="bigsk1">
+    <title>Voice Chat AI - Browser Audio V3 (Live Editing)</title>
+    <link rel="stylesheet" href="/app/static/css/styles.css">
+    <link rel="icon" href="/app/static/favicon.ico" type="image/x-icon">
+    <style>
+        /* Enhanced page specific styles */
+        .control-button {
+            margin: 0 8px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .controls button, .control-button {
+            padding: 8px 12px;
+            flex-grow: 1;
+            max-width: 200px;
+            font-size: 0.9rem;
+            text-align: center;
+            border-radius: 4px;
+            font-weight: normal;
+        }
+        
+        .settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .setting-group label {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .setting-group select, .setting-group textarea {
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 0.9rem;
+            font-family: monospace;
+        }
+        
+        .setting-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        /* Live editing section */
+        .live-editing {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(255,165,0,0.1);
+            border: 2px solid #ff9500;
+            border-radius: 8px;
+        }
+        
+        .live-editing h3 {
+            margin-top: 0;
+            color: #ff9500;
+        }
+        
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #2ecc71;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .prompt-editor {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .prompt-editor {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Message types */
+        .system-message {
+            color: #777;
+            font-size: 0.9rem;
+            text-align: center;
+            margin: 0.5rem 0;
+            font-style: italic;
+        }
+        
+        .error-message {
+            color: #d9534f;
+            background-color: rgba(217, 83, 79, 0.1);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+        
+        .user-message {
+            background-color: rgba(52, 152, 219, 0.1);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            color: #3498db;
+        }
+        
+        .ai-message {
+            background-color: rgba(46, 204, 113, 0.1);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            color: #2ecc71;
+        }
+        
+        /* Recording indicator */
+        .recording {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Mic icon styles */
+        .mic-container {
+            text-align: center;
+            margin: 1rem 0;
+        }
+        
+        .mic-icon {
+            font-size: 3rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #888;
+        }
+        
+        .mic-icon.recording {
+            color: #e74c3c;
+        }
+        
+        .mic-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        .mic-status {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        /* V3 badge */
+        .v3-badge {
+            background: linear-gradient(135deg, #ff9500, #ff6b00);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
+        
+        .char-count {
+            font-size: 0.8rem;
+            color: #666;
+            text-align: right;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Voice Chat AI <span class="v3-badge">V3 - Live Editing</span></h1>
+            <div class="header-controls">
+                <button id="theme-toggle" class="control-button">🌙 Dark Mode</button>
+                <button id="downloadButton" class="control-button">💾 Download</button>
+                <button id="clearButton" class="control-button">🗑️ Clear</button>
+            </div>
+        </header>
+
+        <!-- Live Editing Section -->
+        <div class="live-editing">
+            <h3>⚡ Live Prompt Editor</h3>
+            
+            <div class="toggle-container">
+                <label for="greetingToggle" style="font-weight: bold;">Enable Greeting:</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="greetingToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+                <span id="greetingStatus">(Enabled)</span>
+            </div>
+            
+            <div class="prompt-editor">
+                <div class="setting-group">
+                    <label for="characterPrompt">📝 Character System Prompt:</label>
+                    <textarea id="characterPrompt" placeholder="Loading character prompt..."></textarea>
+                    <div class="char-count" id="promptCharCount">0 characters</div>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="moodPrompts">🎭 Mood Prompts (JSON):</label>
+                    <textarea id="moodPrompts" placeholder='{"happy": "Be cheerful...", "sad": "Be empathetic...", "greeting": "Custom greeting..."}'></textarea>
+                    <div class="char-count" id="moodCharCount">0 characters</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings">
+            <div class="setting-group">
+                <label for="characterSelect">🎭 Character:</label>
+                <select id="characterSelect">
+                    <option value="wizard">Wizard</option>
+                </select>
+            </div>
+            
+            <div class="setting-group">
+                <label for="modelProviderSelect">🤖 Model Provider (LLM):</label>
+                <select id="modelProviderSelect">
+                    <option value="ollama">Ollama (Local - FREE)</option>
+                    <option value="openai">OpenAI (Cloud - PAID)</option>
+                    <option value="anthropic">Anthropic (Cloud - PAID)</option>
+                    <option value="xai">XAI (Cloud - PAID)</option>
+                </select>
+            </div>
+            
+            <div class="setting-group">
+                <label for="modelSelect">📋 Model:</label>
+                <select id="modelSelect">
+                    <option value="llama3.2">llama3.2</option>
+                </select>
+            </div>
+            
+            <div class="setting-group">
+                <label for="ttsProviderSelect">🔊 TTS Provider:</label>
+                <select id="ttsProviderSelect">
+                    <option value="espeak">eSpeak TTS (Free/Local)</option>
+                    <option value="piper">Piper TTS</option>
+                    <option value="coqui">Coqui TTS</option>         
+                    <option value="openai">OpenAI TTS</option>
+                    <option value="elevenlabs">ElevenLabs TTS</option>
+                    <option value="kokoro">Kokoro TTS</option>
+                    <option value="xtts">XTTS TTS</option>
+                        
+                </select>
+            </div>
+            
+            <div class="setting-group">
+                <label for="voiceSelect">🎙️ Voice:</label>
+                <select id="voiceSelect">
+                    <option value="onyx">Onyx (Male)</option>
+                    <option value="alloy">Alloy (Female)</option>
+                    <option value="echo">Echo (Male)</option>
+                    <option value="fable">Fable (Male)</option>
+                    <option value="nova">Nova (Female)</option>
+                    <option value="shimmer">Shimmer (Female)</option>
+                    <option value="ash">Ash (Male)</option>
+                    <option value="coral">Coral (Female)</option>
+                    <option value="sage">Sage (Female)</option>
+                </select>
+            </div>
+            
+            <div class="setting-group">
+                <label for="speedSelect">⚡ Voice Speed:</label>
+                <select id="speedSelect">
+                    <option value="0.75">0.75x (Slow)</option>
+                    <option value="1.0" selected>1.0x (Normal)</option>
+                    <option value="1.25">1.25x (Fast)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn">▶️ Start</button>
+            <button id="stopBtn" disabled>⏹️ Stop</button>
+        </div>
+
+        <div class="mic-container">
+            <div id="micIcon" class="mic-icon">🎤</div>
+            <div id="micStatus" class="mic-status">Click Start to begin</div>
+        </div>
+
+        <div id="conversation" class="conversation">
+            <div id="messages"></div>
+        </div>
+
+        <footer>
+            <p>Browser Audio Mode V3 - Live Editing</p>
+            <p id="footerStatus">Edit prompts live and test different configurations</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let websocket;
+            let mediaRecorder;
+            let audioChunks = [];
+            let isRecording = false;
+            let isActive = false;
+            let stream = null;
+            
+            const micIcon = document.getElementById('micIcon');
+            const micStatus = document.getElementById('micStatus');
+            const conversation = document.getElementById('conversation');
+            const messages = document.getElementById('messages');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const clearButton = document.getElementById('clearButton');
+            const downloadButton = document.getElementById('downloadButton');
+            const characterSelect = document.getElementById('characterSelect');
+            const modelProviderSelect = document.getElementById('modelProviderSelect');
+            const modelSelect = document.getElementById('modelSelect');
+            const ttsProviderSelect = document.getElementById('ttsProviderSelect');
+            const voiceSelect = document.getElementById('voiceSelect');
+            const speedSelect = document.getElementById('speedSelect');
+            const themeToggle = document.getElementById('theme-toggle');
+            const footerStatus = document.getElementById('footerStatus');
+            const greetingToggle = document.getElementById('greetingToggle');
+            const greetingStatus = document.getElementById('greetingStatus');
+            const characterPrompt = document.getElementById('characterPrompt');
+            const moodPrompts = document.getElementById('moodPrompts');
+            const promptCharCount = document.getElementById('promptCharCount');
+            const moodCharCount = document.getElementById('moodCharCount');
+            
+            // Model options for each provider
+            const modelOptions = {
+                'ollama': [
+                    { value: 'tinyllama', label: 'TinyLlama 1.1B (Fastest)' },
+                    { value: 'llama3.2:1b', label: 'Llama 3.2 1B (Very Fast)' },
+                    { value: 'llama3.2', label: 'Llama 3.2 3B (Balanced)' },
+                    { value: 'llama3.1', label: 'Llama 3.1' },
+                    { value: 'phi3', label: 'Phi-3' },
+                    { value: 'mistral', label: 'Mistral' },
+                    { value: 'llama2', label: 'Llama 2' }
+                ],
+                'openai': [
+                    { value: 'gpt-4o', label: 'GPT-4o (Best)' },
+                    { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Fast)' },
+                    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' }
+                ],
+                'anthropic': [
+                    { value: 'claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet (Best)' },
+                    { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
+                    { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku (Fast)' }
+                ],
+                'xai': [
+                    { value: 'grok-2-1212', label: 'Grok 2 (Latest)' },
+                    { value: 'grok-beta', label: 'Grok Beta' }
+                ]
+            };
+            
+            // Character count updates
+            characterPrompt.addEventListener('input', function() {
+                promptCharCount.textContent = `${characterPrompt.value.length} characters`;
+            });
+            
+            moodPrompts.addEventListener('input', function() {
+                moodCharCount.textContent = `${moodPrompts.value.length} characters`;
+            });
+            
+            // Greeting toggle
+            greetingToggle.addEventListener('change', function() {
+                greetingStatus.textContent = greetingToggle.checked ? '(Enabled)' : '(Disabled)';
+            });
+            
+            // Load characters
+            fetch('/characters')
+                .then(response => response.json())
+                .then(data => {
+                    characterSelect.innerHTML = '';
+                    data.characters.forEach(char => {
+                        const option = document.createElement('option');
+                        option.value = char;
+                        option.textContent = char.replace(/_/g, ' ');
+                        characterSelect.appendChild(option);
+                    });
+                    // Load initial character prompts
+                    loadCharacterPrompts(characterSelect.value);
+                })
+                .catch(error => console.error('Error loading characters:', error));
+            
+            // Load character prompts when character changes
+            characterSelect.addEventListener('change', function() {
+                loadCharacterPrompts(characterSelect.value);
+            });
+            
+            // Load character prompts function
+            function loadCharacterPrompts(character) {
+                fetch(`/api/character/${character}/prompts`)
+                    .then(response => response.json())
+                    .then(data => {
+                        characterPrompt.value = data.system_prompt || '';
+                        moodPrompts.value = JSON.stringify(data.mood_prompts || {}, null, 2);
+                        promptCharCount.textContent = `${characterPrompt.value.length} characters`;
+                        moodCharCount.textContent = `${moodPrompts.value.length} characters`;
+                    })
+                    .catch(error => {
+                        console.error('Error loading character prompts:', error);
+                        characterPrompt.value = 'Error loading character prompt';
+                        moodPrompts.value = '{}';
+                    });
+            }
+            
+            // Update model dropdown based on provider selection
+            modelProviderSelect.addEventListener('change', function() {
+                const provider = modelProviderSelect.value;
+                const models = modelOptions[provider];
+                modelSelect.innerHTML = '';
+                models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.value;
+                    option.textContent = model.label;
+                    modelSelect.appendChild(option);
+                });
+                updateFooterStatus();
+            });
+            
+            // Initialize with default provider models
+            modelProviderSelect.dispatchEvent(new Event('change'));
+            
+            // Update footer status
+            function updateFooterStatus() {
+                const provider = modelProviderSelect.value;
+                const tts = ttsProviderSelect.value;
+                const isFree = (provider === 'ollama' && tts === 'xtts');
+                
+                if (isFree) {
+                    footerStatus.textContent = 'Cost: $0/month (100% FREE) | Privacy: Everything runs locally';
+                } else if (provider === 'ollama') {
+                    footerStatus.textContent = `Cost: Low (FREE LLM + PAID TTS) | Privacy: LLM runs locally`;
+                } else {
+                    footerStatus.textContent = `Cost: PAID (${provider.toUpperCase()} + ${tts.toUpperCase()}) | Privacy: Cloud-based`;
+                }
+            }
+            
+            ttsProviderSelect.addEventListener('change', updateFooterStatus);
+            
+            // Theme toggle
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.body.classList.toggle('light-mode', savedTheme === 'light');
+            themeToggle.textContent = savedTheme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode';
+            
+            themeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('light-mode');
+                const isLight = document.body.classList.contains('light-mode');
+                localStorage.setItem('theme', isLight ? 'light' : 'dark');
+                themeToggle.textContent = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
+            });
+            
+            // Connect to WebSocket
+            function connectWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                websocket = new WebSocket(`${protocol}//${window.location.hostname}/ws_enhanced_browser_v3`);
+                
+                websocket.onopen = function() {
+                    displayMessage("Connected to server (V3 - Live Editing Mode)", "system-message");
+                    console.log("WebSocket connected");
+                };
+                
+                websocket.onmessage = async function(event) {
+                    if (event.data instanceof Blob) {
+                        // Audio data received
+                        console.log("Received audio blob:", event.data.size, "bytes");
+                        const audio = new Audio(URL.createObjectURL(event.data));
+                        await audio.play();
+                    } else {
+                        // JSON message
+                        const data = JSON.parse(event.data);
+                        
+                        if (data.action === "connected") {
+                            console.log("Server confirmed connection");
+                        } else if (data.action === "user_message" || data.message?.startsWith("You:")) {
+                            displayMessage(data.message || data.action, "user-message");
+                        } else if (data.action === "ai_message" || data.message) {
+                            if (!data.action || data.action === "ai_message") {
+                                displayMessage(data.message, "ai-message");
+                            } else if (data.action !== "generating_speech" && data.action !== "processing") {
+                                displayMessage(data.message, "system-message");
+                            }
+                        } else if (data.action === "error") {
+                            displayMessage(data.message, "error-message");
+                            // Re-enable start button if there was an error
+                            if (data.message.includes("already active")) {
+                                startBtn.disabled = false;
+                            }
+                        } else if (data.action === "conversation_started") {
+                            displayMessage(data.message, "system-message");
+                            micStatus.textContent = "Conversation active - Click mic to speak";
+                            stopBtn.disabled = false;  // Enable stop button only when server confirms
+                        } else if (data.action === "conversation_stopped") {
+                            displayMessage(data.message, "system-message");
+                            micStatus.textContent = "Conversation stopped";
+                        } else if (data.action === "response_complete") {
+                            micStatus.textContent = "Ready - Click mic to speak";
+                        }
+                    }
+                };
+                
+                websocket.onerror = function(error) {
+                    console.error("WebSocket error:", error);
+                    displayMessage("Connection error", "error-message");
+                };
+                
+                websocket.onclose = function() {
+                    console.log("WebSocket closed");
+                    displayMessage("Disconnected from server", "system-message");
+                };
+            }
+            
+            // Initialize microphone
+            async function initializeMicrophone() {
+                try {
+                    console.log("Requesting microphone access...");
+                    stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            channelCount: 1,
+                            sampleRate: 16000,
+                            echoCancellation: true,
+                            noiseSuppression: true
+                        } 
+                    });
+                    
+                    console.log("Microphone access granted");
+                    
+                    // Try different MIME types
+                    const mimeTypes = [
+                        'audio/webm;codecs=opus',
+                        'audio/webm',
+                        'audio/ogg;codecs=opus'
+                    ];
+                    
+                    let selectedMimeType = null;
+                    for (const mimeType of mimeTypes) {
+                        if (MediaRecorder.isTypeSupported(mimeType)) {
+                            selectedMimeType = mimeType;
+                            break;
+                        }
+                    }
+                    
+                    if (!selectedMimeType) {
+                        throw new Error("No supported audio format found");
+                    }
+                    
+                    console.log("Using MIME type:", selectedMimeType);
+                    
+                    mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: selectedMimeType
+                    });
+                    
+                    console.log("MediaRecorder created with state:", mediaRecorder.state);
+                    
+                    mediaRecorder.ondataavailable = function(event) {
+                        if (event.data.size > 0) {
+                            audioChunks.push(event.data);
+                            console.log(`Audio chunk received: ${event.data.size} bytes`);
+                        }
+                    };
+                    
+                    mediaRecorder.onstop = function() {
+                        console.log(`MediaRecorder stopped. Chunks collected: ${audioChunks.length}`);
+                        
+                        if (audioChunks.length === 0) {
+                            console.error("No audio chunks collected!");
+                            displayMessage("No audio recorded. Please try again.", "error-message");
+                            isRecording = false;
+                            micIcon.classList.remove('recording');
+                            micStatus.textContent = "Click microphone to speak";
+                            return;
+                        }
+                        
+                        const audioBlob = new Blob(audioChunks, { type: selectedMimeType || 'audio/webm' });
+                        console.log(`Created audio blob: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+                        audioChunks = [];
+                        
+                        // Send audio to server
+                        if (websocket && websocket.readyState === WebSocket.OPEN) {
+                            console.log(`Sending audio to server...`);
+                            websocket.send(audioBlob);
+                            micStatus.textContent = "Processing...";
+                        } else {
+                            console.error(`WebSocket not ready! State: ${websocket?.readyState}`);
+                            displayMessage("WebSocket not connected", "error-message");
+                        }
+                        
+                        isRecording = false;
+                        micIcon.classList.remove('recording');
+                    };
+                    
+                    mediaRecorder.onerror = function(event) {
+                        console.error("MediaRecorder error:", event.error);
+                        displayMessage("Recording error: " + event.error, "error-message");
+                    };
+                    
+                    console.log("Microphone initialized successfully");
+                    return true;
+                } catch (error) {
+                    console.error("Error accessing microphone:", error);
+                    displayMessage("Error: Could not access microphone. Please check permissions.", "error-message");
+                    return false;
+                }
+            }
+            
+            // Display message
+            function displayMessage(message, className) {
+                const messageElement = document.createElement('div');
+                messageElement.textContent = message;
+                if (className) {
+                    messageElement.className = className;
+                }
+                messages.appendChild(messageElement);
+                conversation.scrollTop = conversation.scrollHeight;
+            }
+            
+            // Start button
+            startBtn.addEventListener('click', async function() {
+                // Disable immediately to prevent double-clicks
+                if (startBtn.disabled) return;
+                startBtn.disabled = true;
+                
+                if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                    connectWebSocket();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                const micReady = await initializeMicrophone();
+                if (!micReady) {
+                    return;
+                }
+                
+                // Parse mood prompts JSON
+                let parsedMoodPrompts = {};
+                try {
+                    parsedMoodPrompts = JSON.parse(moodPrompts.value);
+                } catch (e) {
+                    displayMessage("Warning: Invalid mood prompts JSON, using empty object", "error-message");
+                }
+                
+                // Send configuration to server
+                websocket.send(JSON.stringify({
+                    action: 'start_conversation',
+                    character: characterSelect.value,
+                    modelProvider: modelProviderSelect.value,
+                    model: modelSelect.value,
+                    ttsProvider: ttsProviderSelect.value,
+                    voice: voiceSelect.value,
+                    speed: speedSelect.value,
+                    enableGreeting: greetingToggle.checked,
+                    customSystemPrompt: characterPrompt.value,
+                    customMoodPrompts: parsedMoodPrompts
+                }));
+                
+                isActive = true;
+                stopBtn.disabled = false;  // Enable stop immediately, don't wait for server
+                micStatus.textContent = "Starting conversation...";
+                
+                displayMessage(`Starting with ${modelProviderSelect.options[modelProviderSelect.selectedIndex].text} + ${ttsProviderSelect.options[ttsProviderSelect.selectedIndex].text}`, "system-message");
+            });
+            
+            // Stop button
+            stopBtn.addEventListener('click', function() {
+                // Prevent multiple stops
+                //if (!isActive && stopBtn.disabled) return;
+                if (stopBtn.disabled) return;
+                
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({
+                        action: 'stop_conversation'
+                    }));
+                }
+                
+                // Stop any ongoing recording
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    try {
+                        mediaRecorder.stop();
+                    } catch (e) {
+                        console.error("Error stopping mediaRecorder:", e);
+                    }
+                }
+                
+                // Stop microphone
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+                
+                // Reset state
+                isActive = false;
+                isRecording = false;
+                mediaRecorder = null;
+                audioChunks = [];  // Clear any pending audio chunks
+                
+                // Update UI
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                micIcon.classList.remove('recording');
+                micStatus.textContent = "Conversation stopped";
+                
+                displayMessage("Conversation stopped", "system-message");
+            });
+            
+            // Mic button
+            micIcon.addEventListener('click', function() {
+                console.log(`Mic clicked. isActive: ${isActive}, isRecording: ${isRecording}, mediaRecorder: ${mediaRecorder}, state: ${mediaRecorder?.state}`);
+                
+                if (!isActive) {
+                    displayMessage("Please click Start first", "system-message");
+                    return;
+                }
+                
+                if (!mediaRecorder) {
+                    displayMessage("Microphone not initialized", "error-message");
+                    return;
+                }
+                
+                if (!isRecording) {
+                    // Start recording
+                    audioChunks = [];
+                    try {
+                        mediaRecorder.start();
+                        isRecording = true;
+                        micIcon.classList.add('recording');
+                        micStatus.textContent = "🔴 Recording... Click again to stop";
+                        console.log("Recording started");
+                    } catch (error) {
+                        console.error("Error starting recording:", error);
+                        displayMessage("Error starting recording: " + error.message, "error-message");
+                    }
+                } else {
+                    // Stop recording
+                    try {
+                        mediaRecorder.stop();
+                        micStatus.textContent = "Processing...";
+                        console.log("Recording stopped");
+                    } catch (error) {
+                        console.error("Error stopping recording:", error);
+                        displayMessage("Error stopping recording: " + error.message, "error-message");
+                    }
+                }
+            });
+            
+            // Clear button
+            clearButton.addEventListener('click', function() {
+                messages.innerHTML = '';
+                displayMessage("Conversation cleared", "system-message");
+            });
+            
+            // Download button
+            downloadButton.addEventListener('click', function() {
+                const text = Array.from(messages.children)
+                    .map(msg => msg.textContent)
+                    .join('\n\n');
+                
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'conversation_v3.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+            
+            // Initialize footer status
+            updateFooterStatus();
+        });
+    </script>
+</body>
+</html>
+
