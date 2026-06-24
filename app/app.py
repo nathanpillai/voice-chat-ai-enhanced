@@ -42,6 +42,13 @@ XAI_MODEL = os.getenv('XAI_MODEL', 'grok-2-1212')
 XAI_BASE_URL = os.getenv('XAI_BASE_URL', 'https://api.x.ai/v1')
 OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3.2')
 OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
+# AskAi RAG provider: instead of talking to a raw LLM, the voice agent asks the
+# FaastLab AskAi server, which retrieves from the tenant's document corpus and
+# returns a grounded answer + citations. Set MODEL_PROVIDER=askai to use it.
+# ASKAI_BASE_URL = the AskAi API root (no trailing slash), ASKAI_TOKEN = a JWT
+# for a user in the demo tenant (so the answer is scoped to that tenant's docs).
+ASKAI_BASE_URL = os.getenv('ASKAI_BASE_URL', 'http://localhost:8001')
+ASKAI_TOKEN = os.getenv('ASKAI_TOKEN', '')
 ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
 ANTHROPIC_MODEL = os.getenv('ANTHROPIC_MODEL', 'claude-3-7-sonnet-20250219')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
@@ -792,7 +799,43 @@ def chatgpt_streamed(user_input, system_message, mood_prompt, conversation_histo
         except requests.exceptions.RequestException as e:
             full_response = f"Error connecting to Ollama model: {e}"
             print(f"Debug: Ollama error - {e}")
-    
+
+    elif MODEL_PROVIDER == 'askai':
+        # RAG path: ask the AskAi server, which retrieves from the tenant's
+        # document corpus and returns a grounded answer with citations. We send
+        # only the user's question — retrieval + the system prompt live in AskAi,
+        # so the character/system_message here is intentionally not forwarded.
+        headers = {'Content-Type': 'application/json'}
+        if ASKAI_TOKEN:
+            headers['Authorization'] = f'Bearer {ASKAI_TOKEN}'
+        # Non-streaming: a spoken answer needs the full sentence before TTS, and
+        # the blocking /v1/ask response carries the citations in one payload.
+        payload = {"query": user_input, "stream": False}
+        try:
+            print(f"Debug: Sending question to AskAi: {ASKAI_BASE_URL}/v1/ask")
+            response = requests.post(
+                f'{ASKAI_BASE_URL}/v1/ask', headers=headers, json=payload, timeout=60
+            )
+            response.raise_for_status()
+            data = response.json()
+            full_response = (data.get('answer') or '').strip()
+            # Citations are shown on-screen for the demo but not spoken aloud —
+            # reading URLs over TTS is painful. The web UI can render them richly.
+            citations = data.get('citations') or []
+            if citations:
+                print(f"{NEON_GREEN}{full_response}{RESET_COLOR}")
+                print(f"\nSources ({len(citations)}):")
+                for c in citations[:5]:
+                    title = c.get('title') or c.get('source_uri') or c.get('document_id')
+                    print(f"  - {title}")
+            else:
+                print(NEON_GREEN + full_response + RESET_COLOR)
+            if not full_response:
+                full_response = "I couldn't find anything on that in the documents."
+        except requests.exceptions.RequestException as e:
+            full_response = f"Error connecting to AskAi: {e}"
+            print(f"Debug: AskAi error - {e}")
+
     elif MODEL_PROVIDER == 'xai':
         messages = [{"role": "system", "content": system_message + "\n" + mood_prompt}] + conversation_history + [{"role": "user", "content": user_input}]
         headers = {
